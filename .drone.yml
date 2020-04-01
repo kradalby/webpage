@@ -1,0 +1,60 @@
+---
+kind: pipeline
+type: kubernetes
+name: default
+
+node_selector:
+  drone: "true"
+
+steps:
+  - name: build
+    pull: always
+    image: plugins/docker
+    environment:
+      DOCKER_BUILDKIT: 1
+    settings:
+      repo: kradalby/webpage
+      tags:
+        - latest
+        - ${DRONE_COMMIT_SHA:0:8}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      branch:
+        - master
+
+  - name: deploy
+    pull: always
+    image: kradalby/drone-kubectl
+    environment:
+      KUBERNETES_CERT:
+        from_secret: kubernetes_cert
+      KUBERNETES_SERVER:
+        from_secret: kubernetes_server
+      KUBERNETES_TOKEN:
+        from_secret: kubernetes_token
+      APP: webpage
+    commands:
+      - kubectl -n $APP set image deployment/$APP common=kradalby/$APP:${DRONE_COMMIT_SHA:0:8} --record
+      - kubectl -n $APP rollout status deployment $APP
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+---
+kind: secret
+name: docker_username
+get:
+  path: docker
+  name: username
+
+---
+kind: secret
+name: docker_password
+get:
+  path: docker
+  name: password
