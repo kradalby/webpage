@@ -1,3 +1,3 @@
 # Untitled new webpage project
 
-Initial work moving off Pelican
+Initial work to move off Pelican
