@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:latest
 
 COPY redirect_pelican.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
+# COPY --from=builder /app/dist /usr/share/nginx/html
