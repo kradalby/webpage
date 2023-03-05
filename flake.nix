@@ -45,7 +45,7 @@
             '';
           };
 
-          default = pkgs.symlinkJoin {
+          kradalby = pkgs.symlinkJoin {
             name = "kradalby-${kradalbyBin.version}";
             paths = [
               kradalbyBin
@@ -104,7 +104,7 @@
 
               port = mkOption {
                 type = types.port;
-                default = "54676";
+                default = 30010;
               };
             };
           };
@@ -112,7 +112,7 @@
             systemd.services.kradalby = {
               enable = true;
               script = ''
-                ${cfg.package}/bin/kradalby}
+                ${cfg.package}/bin/kradalby
               '';
               wantedBy = [ "multi-user.target" ];
               after = [ "network-online.target" ];
@@ -120,9 +120,10 @@
                 DynamicUser = true;
                 Restart = "always";
                 RestartSec = "15";
+                WorkingDirectory = cfg.package;
               };
               environment = {
-                PORT = cfg.port;
+                PORT = toString cfg.port;
               };
             };
           };
