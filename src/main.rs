@@ -46,7 +46,7 @@ async fn handler() -> Markup {
                 a href="https://github.com/juanfont/headscale" {"Headscale"} "."
             }
             p {
-                "Travelling, bouldering, cooking, photography"
+                "Travelling, bouldering, cooking, photography."
             }
 
             a href="https://github.com/kradalby" { (github(Some(48))) }
@@ -178,7 +178,7 @@ async fn handler_about() -> Markup {
             h3 { "Hi, I am Kristoffer"}
             p { "I am Software engineer from Norway, currently living in Leiden, The Netherlands and slowly travelling the world." }
             p {
-                "I work as a Member of Techinal Staff at "
+                "I work as a Member of Technical Staff at "
                 a href="https://tailscale.com" { "Tailscale" }
                 " where I work on both Tailscale and "
                 a href="https://github.com/juanfont/headscale" { "Headscale" }
@@ -187,7 +187,7 @@ async fn handler_about() -> Markup {
             p {
                 "I have a Master in Informatics from "
                 a href="https://www.ntnu.edu" { "Norwegian University of Science and Technology" }
-                ". After finishing my master, I moved abroad to participate in a two year Young Graduate Traine program at the "
+                ". After finishing my master, I moved abroad to participate in a two year Young Graduate Trainee program at the "
                 a href="https://esa.int" { "European Space Agency" }
                 "."
             }
