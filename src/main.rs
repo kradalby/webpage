@@ -37,6 +37,8 @@ async fn handler() -> Markup {
     base(
         Some("Kristoffer Dalby"),
         html! {
+            (gravatar(None))
+
             p {
                 "Software engineer at "
                 a href="https://tailscale.com" {"Tailscale"}
@@ -193,7 +195,7 @@ async fn handler_about() -> Markup {
                 "Outside of work, I am a passionate traveller, amateur boulderer and sometimes I dabbles in photography and cooking."
             }
 
-            img src="https://gravatar.com/avatar/e77f306a388b9463ad2310c8f041d42a?s=400&d=robohash&r=x" {}
+            (gravatar(None))
 
             h2 { "Public speaking" }
             p { "I have done some public speaking, here is a list of publicly available talks:" }
@@ -252,6 +254,18 @@ fn base(title: Option<&str>, body: Markup) -> Markup {
                 }
             }
         }
+    }
+}
+
+fn gravatar(size: Option<i32>) -> Markup {
+    let s = size.unwrap_or(400).to_string();
+    let url = Some(format!(
+        "https://gravatar.com/avatar/e77f306a388b9463ad2310c8f041d42a?s={}&d=robohash&r=x",
+        s
+    ));
+
+    html! {
+            img src=[url] {}
     }
 }
 
