@@ -64,6 +64,39 @@ async fn handler_salary(State(salaries): State<Vec<Salary>>) -> Markup {
     base(
         Some("Salary transparency"),
         html! {
+            p {
+                "I am a big supporter of salary transparency and this page lists the salaries I have had in my professional work life. Sharing salaries helps giving the negotiation power back to employees allowing them to ask for what they are worth when negotiating with their employer."
+            }
+
+            p {
+                "Pay discrimination is a huge problem and different gaps are continuously growing larger. Publicly available data is one of the ways we can empower people to close these gaps by knowing their worth when they come to the negotiation table. People seem to often come to the table with an expectation, that is lower than their actually worth, based on things like lack of salary transparency, imposter syndrom and stigmatising talking and asking for salary."
+
+            }
+
+            p {
+                "Companies will rarely and gladly offer a fair salary based on an employees worth based on their peers if they do not ask for it."
+            }
+
+            h2 {
+                "Ethos"
+            }
+
+            p {
+                "I believe that the only entity that benefits from hidden salaries are employers/companies. Not employees."
+            }
+
+            h2 {
+                "Data"
+            }
+
+            p {
+                "This data is compiled from contracts, payslips and memory, it might not be 100% accurate, but sufficient to show the general idea. These salaries are spread across multiple countries, currencies and different pay models (fixed/bonus/equity) and might not show an easy to compare picture."
+            }
+
+            p {
+                "Company information has intentionally been omitted and if there were information that would have been sensitive, it has been removed."
+            }
+
             table {
                 thead {
                     tr {
@@ -111,6 +144,25 @@ async fn handler_salary(State(salaries): State<Vec<Salary>>) -> Markup {
                         }
                     }
                 }
+            }
+
+            p {
+                "I aim to update this when typically change events happens like:"
+            }
+
+            ul {
+                li {"I leave a job"}
+                li {"My title changes"}
+                li {"I get a raise"}
+                li {"I am fired"}
+            }
+
+            h2 {
+                "Contributing"
+            }
+
+            p {
+                "The best way to help out is to join in and publish your salary information, that way more people get more knowledge and we can remove even more of the stigma related to salaries and make sure people are treated fairly."
             }
 
         },

@@ -23,7 +23,7 @@
 
         naersk' = pkgs.callPackage naersk { };
       in
-      rec {
+      {
         # For `nix build` & `nix run`:
         packages = rec {
           kradalbyBin = naersk'.buildPackage {
