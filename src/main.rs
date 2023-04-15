@@ -1,7 +1,14 @@
-use axum::{extract::State, routing::get, Router};
-use maud::{html, Markup, DOCTYPE};
-use serde::Serialize;
-use std::net::SocketAddr;
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Router,
+};
+use frontmatter::parse_and_find_content;
+use maud::{html, Markup, PreEscaped, DOCTYPE};
+use pulldown_cmark::{html, Options, Parser};
+use serde::Deserialize;
+use std::{collections::HashMap, fs, net::SocketAddr};
+use yaml_rust::YamlEmitter;
 
 use kradalby::Salary;
 
@@ -9,15 +16,23 @@ use kradalby::Salary;
 async fn main() -> anyhow::Result<()> {
     let salaries: Vec<Salary> = serde_dhall::from_file("./dhall/salaries.dhall").parse()?;
 
+    let posts: HashMap<MarkdownMetadata, String> = load_posts();
+
+    // TODO: Do not reread them from disk
+    let posts_by_slug = posts_by_slug(load_posts());
+
     // let files = SpaRouter::new("/static/css", env!("XESS_PATH"));
 
     let app = Router::new()
         .route("/", get(handler))
         .route("/posts", get(handler_posts))
+        .with_state(posts)
+        .route("/posts/:slug", get(handler_show_post))
+        .with_state(posts_by_slug)
         .route("/salary", get(handler_salary))
-        .route("/about", get(handler_about))
-        .with_state(salaries);
-    // .merge(files)
+        .with_state(salaries)
+        .route("/about", get(handler_about));
+    // .merge(files);
 
     // run it
     let port = std::env::var("PORT")
@@ -31,6 +46,61 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     Ok(())
+}
+
+#[derive(Deserialize, Eq, Hash, PartialEq, Clone)]
+struct MarkdownMetadata {
+    title: String,
+    date: String,
+    modified: String,
+    slug: String,
+    tags: Vec<String>,
+    summary: String,
+}
+
+fn load_posts() -> HashMap<MarkdownMetadata, String> {
+    let mut posts: HashMap<MarkdownMetadata, String> = HashMap::new();
+
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TABLES);
+    options.insert(Options::ENABLE_TASKLISTS);
+
+    for file in fs::read_dir("./md").unwrap() {
+        let path = file.unwrap().path();
+        let markdown_input = fs::read_to_string(&path).expect("failed to load markdown");
+
+        let (front_matter, content) = parse_and_find_content(&markdown_input).unwrap();
+
+        let mut yaml_out_str = String::new();
+        {
+            let mut emitter = YamlEmitter::new(&mut yaml_out_str);
+            emitter.dump(&front_matter.unwrap()).unwrap();
+        }
+
+        let metadata: MarkdownMetadata = serde_yaml::from_str(&yaml_out_str).unwrap();
+
+        let parser = Parser::new_ext(&content, options);
+
+        let mut html_output = String::new();
+        html::push_html(&mut html_output, parser);
+
+        posts.insert(metadata, html_output);
+    }
+
+    return posts;
+}
+
+fn posts_by_slug(
+    posts: HashMap<MarkdownMetadata, String>,
+) -> HashMap<String, (MarkdownMetadata, String)> {
+    let mut by_slug: HashMap<String, (MarkdownMetadata, String)> = HashMap::new();
+
+    for (metadata, post) in posts {
+        by_slug.insert(metadata.slug, (metadata, post));
+    }
+
+    return by_slug;
 }
 
 async fn handler() -> Markup {
@@ -58,8 +128,40 @@ async fn handler() -> Markup {
     )
 }
 
-async fn handler_posts() -> Markup {
-    base(Some("Posts"), html! {})
+async fn handler_posts(State(posts): State<HashMap<MarkdownMetadata, String>>) -> Markup {
+    base(
+        Some("Posts"),
+        html! {
+          @for (meta, _post) in &posts {
+              // (PreEscaped(_post))
+              h2 {
+                  (meta.title)
+              }
+          }
+        },
+    )
+}
+
+async fn handler_show_post(
+    Path(slug): Path<String>,
+    State(posts): State<HashMap<String, (MarkdownMetadata, String)>>,
+) -> Markup {
+    if let Some((meta, _content)) = posts.get(&slug) {
+        base(
+            Some("Posts"),
+            html! {
+              h1 { (meta.title) }
+              (PreEscaped(_content))
+            },
+        )
+    } else {
+        base(
+            Some("404 not found"),
+            html! {
+                "404 - not found"
+            },
+        )
+    }
 }
 
 async fn handler_salary(State(salaries): State<Vec<Salary>>) -> Markup {
@@ -220,7 +322,7 @@ fn base(title: Option<&str>, body: Markup) -> Markup {
                 } @else {
                     title { "kradalby.no" }
                 }
-                link rel="stylesheet" href="/static/css/kradalby.css";
+                link rel="stylesheet" href="/static/css/styles.css";
                 meta name="viewport" content="width=device-width, initial-scale=1.0";
             }
 
@@ -228,8 +330,8 @@ fn base(title: Option<&str>, body: Markup) -> Markup {
                 nav {
                     a href="/" {"home"}
                     " - "
-                    // a href="/posts" {"posts"}
-                    // " - "
+                    a href="/posts" {"posts"}
+                    " - "
                     // a href="/salary" {"salary transparency"}
                     // " - "
                     a href="/about" {"about me"}

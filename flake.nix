@@ -31,8 +31,8 @@
             nativeBuildInputs = with pkgs; [ pkg-config openssl ];
           };
 
-          kradalbyData = pkgs.stdenv.mkDerivation {
-            pname = "kradalby-data";
+          kradalbyDhall = pkgs.stdenv.mkDerivation {
+            pname = "kradalby-dhall";
             inherit (kradalbyBin) version;
             src = ./dhall;
             nativeBuildInputs = with pkgs; [ dhall ];
@@ -45,11 +45,25 @@
             '';
           };
 
+          kradalbyMarkdown = pkgs.stdenv.mkDerivation {
+            pname = "kradalby-markdown";
+            inherit (kradalbyBin) version;
+            src = ./md;
+          };
+
+          kradalbyOldMarkdown = pkgs.stdenv.mkDerivation {
+            pname = "kradalby-old-markdown";
+            inherit (kradalbyBin) version;
+            src = ./md;
+          };
+
           kradalby = pkgs.symlinkJoin {
             name = "kradalby-${kradalbyBin.version}";
             paths = [
               kradalbyBin
-              kradalbyData
+              kradalbyDhall
+              kradalbyMarkdown
+              kradalbyOldMarkdown
             ];
           };
         };
