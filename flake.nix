@@ -54,7 +54,7 @@
 
             installPhase = ''
               mkdir -p $out/md
-              cp -r $src/* >> $out/md/.
+              cp -r $src/* $out/md/.
             '';
           };
 
