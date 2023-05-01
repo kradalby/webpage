@@ -49,6 +49,13 @@
             pname = "kradalby-markdown";
             inherit (kradalbyBin) version;
             src = ./md;
+
+            phases = "installPhase";
+
+            installPhase = ''
+              mkdir -p $out/md
+              cp -r $src/* >> $out/md/.
+            '';
           };
 
           kradalbyOldMarkdown = pkgs.stdenv.mkDerivation {
