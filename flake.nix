@@ -61,7 +61,14 @@
           kradalbyOldMarkdown = pkgs.stdenv.mkDerivation {
             pname = "kradalby-old-markdown";
             inherit (kradalbyBin) version;
-            src = ./md;
+            src = ./old_md;
+
+            phases = "installPhase";
+
+            installPhase = ''
+              mkdir -p $out/old_md
+              cp -r $src/* $out/old_md/.
+            '';
           };
 
           kradalby = pkgs.symlinkJoin {
@@ -73,6 +80,8 @@
               kradalbyOldMarkdown
             ];
           };
+
+          default = kradalby;
         };
 
         # For `nix develop`:

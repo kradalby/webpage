@@ -12,23 +12,36 @@ use yaml_rust::YamlEmitter;
 
 use kradalby::Salary;
 
+#[derive(Deserialize, Eq, Hash, PartialEq, Clone)]
+struct MarkdownMetadata {
+    title: String,
+    date: String,
+    modified: String,
+    slug: String,
+    tags: Vec<String>,
+    summary: String,
+}
+
+type Post = (MarkdownMetadata, String);
+type Posts = Vec<Post>;
+type PostsBySlug<'a> = HashMap<&'a String, &'a Post>;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let salaries: Vec<Salary> = serde_dhall::from_file("./dhall/salaries.dhall").parse()?;
 
-    let posts: HashMap<MarkdownMetadata, String> = load_posts();
+    let posts: Posts = load_posts();
 
-    // TODO: Do not reread them from disk
-    let posts_by_slug = posts_by_slug(load_posts());
+    // let posts_by_slug: PostsBySlug = posts_by_slug(&posts);
 
     // let files = SpaRouter::new("/static/css", env!("XESS_PATH"));
 
     let app = Router::new()
         .route("/", get(handler))
-        .route("/posts", get(handler_posts))
-        .with_state(posts)
-        .route("/posts/:slug", get(handler_show_post))
-        .with_state(posts_by_slug)
+        // .route("/posts", get(handler_posts))
+        // .with_state(&posts)
+        // .route("/posts/:slug", get(handler_show_post))
+        // .with_state(posts_by_slug)
         .route("/salary", get(handler_salary))
         .with_state(salaries)
         .route("/about", get(handler_about));
@@ -48,18 +61,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Deserialize, Eq, Hash, PartialEq, Clone)]
-struct MarkdownMetadata {
-    title: String,
-    date: String,
-    modified: String,
-    slug: String,
-    tags: Vec<String>,
-    summary: String,
-}
-
-fn load_posts() -> HashMap<MarkdownMetadata, String> {
-    let mut posts: HashMap<MarkdownMetadata, String> = HashMap::new();
+fn load_posts() -> Posts {
+    let mut posts: Posts = Vec::new();
 
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
@@ -85,19 +88,18 @@ fn load_posts() -> HashMap<MarkdownMetadata, String> {
         let mut html_output = String::new();
         html::push_html(&mut html_output, parser);
 
-        posts.insert(metadata, html_output);
+        posts.push((metadata, html_output));
     }
 
     return posts;
 }
 
-fn posts_by_slug(
-    posts: HashMap<MarkdownMetadata, String>,
-) -> HashMap<String, (MarkdownMetadata, String)> {
-    let mut by_slug: HashMap<String, (MarkdownMetadata, String)> = HashMap::new();
+fn posts_by_slug(posts: &Posts) -> PostsBySlug {
+    let mut by_slug: PostsBySlug = HashMap::new();
 
-    for (metadata, post) in posts {
-        by_slug.insert(metadata.slug, (metadata, post));
+    for post in posts {
+        let slug = &post.0.slug;
+        by_slug.insert(slug, post);
     }
 
     return by_slug;
@@ -128,11 +130,11 @@ async fn handler() -> Markup {
     )
 }
 
-async fn handler_posts(State(posts): State<HashMap<MarkdownMetadata, String>>) -> Markup {
+async fn handler_posts(State(posts): State<&Posts>) -> Markup {
     base(
         Some("Posts"),
         html! {
-          @for (meta, _post) in &posts {
+          @for (meta, _post) in posts {
               // (PreEscaped(_post))
               h2 {
                   (meta.title)
@@ -144,7 +146,7 @@ async fn handler_posts(State(posts): State<HashMap<MarkdownMetadata, String>>) -
 
 async fn handler_show_post(
     Path(slug): Path<String>,
-    State(posts): State<HashMap<String, (MarkdownMetadata, String)>>,
+    State(posts): State<PostsBySlug<'_>>,
 ) -> Markup {
     if let Some((meta, _content)) = posts.get(&slug) {
         base(
