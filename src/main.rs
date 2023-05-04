@@ -30,7 +30,7 @@ type PostsBySlug<'a> = HashMap<&'a String, &'a Post>;
 async fn main() -> anyhow::Result<()> {
     let salaries: Vec<Salary> = serde_dhall::from_file("./dhall/salaries.dhall").parse()?;
 
-    let posts: Posts = load_posts();
+    // let posts: Posts = load_posts();
 
     // let posts_by_slug: PostsBySlug = posts_by_slug(&posts);
 
